@@ -1,49 +1,54 @@
 from os import system as ossys
 from platform import system as platsys
+from typing import List
 
 
-def instalar_dependencias():
-    """Tenta instalar a biblioteca matplotlib no sistema atual.
+def instalar_dependencias(nomes: List[str]):
+	"""Tenta instalar as ferramentas no sistema atual.
 
-    Raises:
-        ImportError: Se houver falha durante ou após instalar o matplotlib.
-    """
+	Args:
+		nomes: Nomes das bibliotecas a serem instaladas
 
-    # Tente importar matplotlib, se falhar, tente instalar
-    try:
-        import cv2
-        import matplotlib
-        import numpy
-        import imutils
+	Raises:
+		ImportError: Se houver falha durante ou após instalar
+	"""
 
-    except ImportError:
+	faltantes = list(nomes)
 
-        print("Instalando dependências, aguarde...")
+	# Tente importar cada ferramenta, se falhar, tente instalar
+	try:
 
-        # Se for Windows, dê o comando, instale e limpe a tela
-        if (platsys().upper() == "WINDOWS"):
-            ossys("pip install --user matplotlib /quiet")
-            ossys("pip install --user numpy /quiet")
-            ossys("pip install --user imutils /quiet")
-            ossys("cls")
+		for lib in nomes:
+			import lib
+			faltantes.remove(lib)
 
-        # Senão, é MAC ou Linux
-        else:
-            ossys("sudo apt-get install python3-tk")
-            ossys("sudo apt-get install python3-opencv")
-            ossys("pip3 install --user matplotlib")
-            ossys("pip3 install --user numpy")
-            ossys("pip3 install --user imutils")
-            ossys("clear")
-            print("Dependências instaladas com êxito!")
+	except ImportError:
 
-    # Se após tentar instalar, o erro ainda persistir, avise e saia
-    finally:
+		print("Instalando dependências, aguarde...")
 
-        try:
-            import matplotlib
-            import numpy
-            import cv2
+		# ossys("sudo apt-get install python3-tk")
+		# ossys("sudo apt-get install python3-opencv")
 
-        except:
-            raise ImportError("Falha ao instalar dependências necessárias. Bye.")
+		for lib in faltantes:
+
+			print(f">>> Tentando instalar '{lib}'")
+
+			# Se for Windows
+			if (platsys().upper() == "WINDOWS"):
+				ossys(f"pip install --user {lib} /quiet")
+
+			# Senão, é MAC ou Linux
+			else:
+				ossys(f"pip3 install --user {lib} -q")
+
+		print("--> Dependências instaladas com êxito!")
+
+	# Se após tentar instalar, o erro ainda persistir, avise e saia
+	finally:
+
+		try:
+			for lib in nomes:
+				import lib
+
+		except:
+			raise ImportError("Falha ao instalar dependências necessárias. Bye.")

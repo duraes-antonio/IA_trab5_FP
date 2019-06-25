@@ -1,4 +1,4 @@
-from math import log, cos, pi
+from math import log, cos, pi, sqrt, exp
 from random import uniform, randint
 from typing import List, Optional
 
@@ -32,8 +32,8 @@ class Particula:
 			self, velocidade: float, v_min: float, v_max: float,
 			eixos: dict, eixos_max: dict):
 
-		Validacao.validar_min_max(v_min, v_max, "VELOCIDADE")
-		Validacao.validar_min_max_dict(eixos, eixos_max)
+		# Validacao.validar_min_max(v_min, v_max, "VELOCIDADE")
+		# Validacao.validar_min_max_dict(eixos, eixos_max)
 
 		# Toda partícula nasce no instante 1
 		self.__t = 1
@@ -107,15 +107,15 @@ class Particula:
 			eixo_ant = self.eixos[chave]
 
 			# TODO(@duraes-antonio) validar cálc de atualização da posição
-			self.eixos[chave] = int(eixo_ant * self.v * delta_t)
+			self.eixos[chave] = int(eixo_ant + eixo_ant * self.v * delta_t)
 
 			# TODO(@duraes-antonio) validar o uso de um ruído na normalização
 			# Valide e normalize o valor do eixo atual
 			if self.eixos[chave] > self.__eixos_max[chave]:
-				self.eixos[chave] = self.__eixos_max[chave] - EIXO_RUIDO
+				self.eixos[chave] = randint(1, EIXO_RUIDO)
 
 			elif self.eixos[chave] < 0:
-				self.eixos[chave] = EIXO_RUIDO
+				self.eixos[chave] = randint(1, EIXO_RUIDO)
 
 			self.eixos[chave] += randint(-EIXO_RUIDO, EIXO_RUIDO)
 
@@ -138,7 +138,7 @@ class Particula:
 		"""
 
 		# Se os dicionários não possuírem os mesmos nomes de eixos;
-		Validacao.validar_chaves(eixos_obj1, eixos_obj2)
+		# Validacao.validar_chaves(eixos_obj1, eixos_obj2)
 
 		soma_quadrados = 0
 
@@ -158,9 +158,9 @@ class Particula:
 		dist = self.__calc_dist_eucl(self.__eixos, eixos_obj)
 
 		if dist == 0:
-			dist = 0.5
+			dist = 1
 
-		self.__w = 1 / dist
+		self.__w = (1 / sqrt(2 * pi * 1)) * exp(-(dist) ** 0.5 / (2 * 1))
 
 		return None
 
@@ -194,6 +194,9 @@ class GrupoParticula:
 			eixos_max: Valores máximo para cada eixo (x, y, z, etc)
 			ruido: Valor para inferir na atualização de posição
 		"""
+
+		Validacao.validar_min_max(v_min, v_max, "VELOCIDADE")
+		Validacao.validar_min_max(v_ini, v_max, "VELOCIDADE")
 
 		self.soma_pesos = 0
 		self.__particulas: [Particula] = []
@@ -282,4 +285,4 @@ class GrupoParticula:
 			soma_y += part.eixos["y"]
 			soma_v += part.v
 
-		return soma_x / self.n, soma_y / self.n, soma_v / self.n
+		return int(soma_x / self.n), int(soma_y / self.n), int(soma_v / self.n)
