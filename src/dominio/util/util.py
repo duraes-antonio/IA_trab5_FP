@@ -16,7 +16,7 @@ def instalar_dependencias():
 	# Tente importar cada ferramenta, se falhar, tente instalar
 	try:
 
-		import cv2
+    import cv2
 
 	except ImportError:
 
@@ -25,25 +25,25 @@ def instalar_dependencias():
 		# ossys("sudo apt-get install python3-tk")
 		# ossys("sudo apt-get install python3-opencv")
 
-		for lib in ["opencv-python"]:
+for lib in ["opencv-python"]:
 
 			print(f">>> Tentando instalar '{lib}'")
 
 			# Se for Windows
 			if (platsys().upper() == "WINDOWS"):
-				ossys(f"pip install --user {lib}")
+ossys(f"pip install --user {lib}")
 
-			# Senão, é MAC ou Linux
-			else:
-				ossys(f"pip3 install --user {lib}")
+# Senão, é MAC ou Linux
+else:
+ossys(f"pip3 install --user {lib}")
 
-		# Se for Windows
-		if (platsys().upper() == "WINDOWS"):
-			ossys("cls")
+# Se for Windows
+if (platsys().upper() == "WINDOWS"):
+    ossys("cls")
 
-		# Senão, é MAC ou Linux
-		else:
-			ossys("clear")
+# Senão, é MAC ou Linux
+else:
+    ossys("clear")
 
 		print("--> Dependências instaladas com êxito!")
 
@@ -51,7 +51,7 @@ def instalar_dependencias():
 	finally:
 
 		try:
-			import cv2
+import cv2
 
 		except:
 			raise ImportError("Falha ao instalar dependências necessárias. Bye.")
