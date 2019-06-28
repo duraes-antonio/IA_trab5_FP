@@ -3,7 +3,7 @@ from platform import system as platsys
 from typing import List
 
 
-def instalar_dependencias(nomes: List[str]):
+def instalar_dependencias():
 	"""Tenta instalar as ferramentas no sistema atual.
 
 	Args:
@@ -13,14 +13,10 @@ def instalar_dependencias(nomes: List[str]):
 		ImportError: Se houver falha durante ou após instalar
 	"""
 
-	faltantes = list(nomes)
-
 	# Tente importar cada ferramenta, se falhar, tente instalar
 	try:
 
-		for lib in nomes:
-			import lib
-			faltantes.remove(lib)
+		import cv2
 
 	except ImportError:
 
@@ -29,17 +25,25 @@ def instalar_dependencias(nomes: List[str]):
 		# ossys("sudo apt-get install python3-tk")
 		# ossys("sudo apt-get install python3-opencv")
 
-		for lib in faltantes:
+		for lib in ["opencv-python"]:
 
 			print(f">>> Tentando instalar '{lib}'")
 
 			# Se for Windows
 			if (platsys().upper() == "WINDOWS"):
-				ossys(f"pip install --user {lib} /quiet")
+				ossys(f"pip install --user {lib}")
 
 			# Senão, é MAC ou Linux
 			else:
-				ossys(f"pip3 install --user {lib} -q")
+				ossys(f"pip3 install --user {lib}")
+
+		# Se for Windows
+		if (platsys().upper() == "WINDOWS"):
+			ossys("cls")
+
+		# Senão, é MAC ou Linux
+		else:
+			ossys("clear")
 
 		print("--> Dependências instaladas com êxito!")
 
@@ -47,8 +51,7 @@ def instalar_dependencias(nomes: List[str]):
 	finally:
 
 		try:
-			for lib in nomes:
-				import lib
+			import cv2
 
 		except:
 			raise ImportError("Falha ao instalar dependências necessárias. Bye.")
