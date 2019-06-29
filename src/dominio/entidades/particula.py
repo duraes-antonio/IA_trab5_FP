@@ -1,6 +1,8 @@
-from math import log, cos, pi, sqrt, exp
-from random import uniform, randint
+from random import randint
 from typing import List, Optional
+
+from math import log, cos, pi, exp
+from numpy.random.mtrand import choice
 
 from ..util.validacoes import Validacao
 
@@ -12,13 +14,15 @@ class Particula:
 	"""Representa uma partícula em um plano N-dimensional."""
 
 	# Lista com todos eixos que definem a posição em uma dimensão N
+	# Exemplo {'x': 10, 'y': 100, 'z': 30}
 	__eixos: dict
 
-	# Velocidade de cada movimento da partícula
-	__v: float
+	# Lista com todas velocidades de todos eixos
+	# Exemplo {'x': 13, 'y': 12, 'z': 10}
+	__velocidades: dict = {}
 
 	# Instante no tempo em que a partícula encontra-se
-	__t: int
+	__t: float
 
 	# Peso que define a chance do estado da part. ser o estado real do objeto
 	__w: float
@@ -29,25 +33,23 @@ class Particula:
 	__eixos_max: dict
 
 	def __init__(
-			self, velocidade: float, v_min: float, v_max: float,
+			self, v_min: float, v_max: float,
 			eixos: dict, eixos_max: dict):
 
-		# Validacao.validar_min_max(v_min, v_max, "VELOCIDADE")
-		# Validacao.validar_min_max_dict(eixos, eixos_max)
+		Validacao.validar_min_max(v_min, v_max, "VELOCIDADE")
+		Validacao.validar_min_max_dict(eixos, eixos_max)
 
-		# Toda partícula nasce no instante 1
-		self.__t = 1
+		# Toda partícula nasce em um instante padrão
+		self.__t = 1 / 30
 
-		self.__v = velocidade
+		# Atualize a velocidade de cada eixo para vel. dada
+		for eixo in eixos:
+			self.__velocidades[eixo] = randint(v_min, v_max)
+
 		self.__v_min = v_min
 		self.__v_max = v_max
 		self.__eixos = eixos
 		self.__eixos_max = eixos_max
-
-	@property
-	def v(self):
-		"""Velocidade atual do movimento da partícula"""
-		return self.__v
 
 	@property
 	def t(self):
@@ -64,10 +66,41 @@ class Particula:
 		"""Dicionário com o nome do eixo como chave e seu valor"""
 		return self.__eixos
 
+	@property
+	def velocidades(self):
+		"""Dicionário com o nome da variável como chave e sua velocidade"""
+		return self.__velocidades
+
+	def atualizar_posicao(self, delta_t: float):
+		"""Atualiza os valores das variáveis posicionais da partícula no espaço
+
+		Args:
+			delta_t: Variação do instante T e o instante anterior
+		"""
+
+		# Para cada eixo(x, y, z, ...) dentro do vetor de posição
+		for chave in self.eixos:
+			eixo_ant = self.eixos[chave]
+			vel_ant = self.__velocidades[chave]
+
+			self.eixos[chave] = int(eixo_ant + eixo_ant * vel_ant * delta_t)
+
+			# TODO(@duraes-antonio) validar o uso de um ruído na normalização
+			# Valide e normalize o valor do eixo atual
+			if self.eixos[chave] > self.__eixos_max[chave]:
+				self.eixos[chave] = self.__eixos_max[chave] - EIXO_RUIDO
+
+			elif self.eixos[chave] < 0:
+				self.eixos[chave] = EIXO_RUIDO
+
+			self.eixos[chave] += randint(-EIXO_RUIDO, EIXO_RUIDO)
+
+		return None
+
 	def atualizar_veloc(self):
 		"""Atualiza a velocidade da partícula com uma perturbação gaussiana"""
 
-		def gerar_distrib_gaussiana(centro: float, desvio: float) -> float:
+		def gerar_dist_gauss(centro: float, desvio: float) -> float:
 			"""
 			Função baseada na 'carmen_gaussian_random'
 			"""
@@ -81,43 +114,20 @@ class Particula:
 			z = (-2 * log(u)) * cos(2 * pi * v)
 			return centro + desvio * z
 
-		veloc_nova = self.v + gerar_distrib_gaussiana(0, 1)
+		for eixo in self.__velocidades:
 
-		# Normalização
-		if veloc_nova > self.__v_max:
-			self.__v = self.__v_max
+			# veloc_nova = self.__velocidades[eixo] + gerar_dist_gauss(0, 0.1)
+			veloc_nova = self.__velocidades[eixo] + (self.__v_max - self.__v_min) * 0.1
 
-		elif veloc_nova < self.__v_min:
-			self.__v = self.__v_min
+			# Normalização
+			if veloc_nova > self.__v_max:
+				self.__velocidades[eixo] = self.__v_max
 
-		else:
-			self.__v = veloc_nova
+			elif veloc_nova < self.__v_min:
+				self.__velocidades[eixo] = self.__v_min
 
-		return None
-
-	def atualizar_posicao(self, delta_t: int):
-		"""Atualiza os valores das variáveis posicionais da partícula no espaço
-
-		Args:
-			delta_t: Variação do instante T e o instante anterior
-		"""
-
-		# Para cada eixo(x, y, z, ...) dentro do vetor de posição
-		for chave in self.eixos:
-			eixo_ant = self.eixos[chave]
-
-			# TODO(@duraes-antonio) validar cálc de atualização da posição
-			self.eixos[chave] = int(eixo_ant + eixo_ant * self.v * delta_t)
-
-			# TODO(@duraes-antonio) validar o uso de um ruído na normalização
-			# Valide e normalize o valor do eixo atual
-			if self.eixos[chave] > self.__eixos_max[chave]:
-				self.eixos[chave] = randint(1, EIXO_RUIDO)
-
-			elif self.eixos[chave] < 0:
-				self.eixos[chave] = randint(1, EIXO_RUIDO)
-
-			self.eixos[chave] += randint(-EIXO_RUIDO, EIXO_RUIDO)
+			else:
+				self.__velocidades[eixo] = veloc_nova
 
 		return None
 
@@ -154,13 +164,21 @@ class Particula:
 			eixos_obj: Eixos posicionais do objeto observado.
 		"""
 
-		# TODO(@duraes-antonio) Fórmula: w = e^(-dist) apresenta PROBLEMAS
+		# TODO(@duraes-antonio) Fórmula: w = exp(-dist) apresenta PROBLEMAS
+		#  para dist > 700
 		dist = self.__calc_dist_eucl(self.__eixos, eixos_obj)
 
+		# Se a dist for zero, defina que é 1, para evitar problemas de divisão
 		if dist == 0:
 			dist = 1
+			self.__w = exp(-dist)
 
-		self.__w = (1 / sqrt(2 * pi * 1)) * exp(-(dist) ** 0.5 / (2 * 1))
+		elif dist < 400:
+			self.__w = exp(-dist)
+
+		# Se a dist for muito grande, o peso tenderá a zero
+		else:
+			self.__w = 0
 
 		return None
 
@@ -170,8 +188,6 @@ class Particula:
 		Args:
 			somatorio_peso: Somatório de pesos do grupo de partículas.
 		"""
-
-		# TODO(@duraes-antonio): Validar se a fórmula está correta
 		self.__w /= somatorio_peso
 		return None
 
@@ -181,14 +197,14 @@ class GrupoParticula:
 
 	__particulas: List[Particula]
 	__n_part: int
+	__eixos_max: dict
 
 	def __init__(
-			self, n: int, v_ini: float, v_min: float, v_max: float,
+			self, n: int, v_min: float, v_max: float,
 			eixos_max: dict, ruido: Optional[int]):
 		"""
 		Args:
 			n: Número de partículas que o grupo terá
-			v_ini: Velocidade inicial para todas partículas
 			v_min: Velocidade mínima (incluvise) permitida
 			v_max: Velocidade máxima (inclusive) permitida
 			eixos_max: Valores máximo para cada eixo (x, y, z, etc)
@@ -196,11 +212,11 @@ class GrupoParticula:
 		"""
 
 		Validacao.validar_min_max(v_min, v_max, "VELOCIDADE")
-		Validacao.validar_min_max(v_ini, v_max, "VELOCIDADE")
 
 		self.soma_pesos = 0
 		self.__particulas: [Particula] = []
 		self.__n_part = n
+		self.__eixos_max = eixos_max
 
 		global EIXO_RUIDO
 
@@ -216,14 +232,14 @@ class GrupoParticula:
 				eixos_random[chave] = randint(0, eixos_max[chave])
 
 			self.__particulas.append(
-				Particula(v_ini, v_min, v_max, eixos_random, eixos_max))
+				Particula(v_min, v_max, eixos_random, eixos_max))
 
 	@property
 	def n(self):
 		"""Número de partículas pertencentes ao grupo"""
 		return self.__n_part
 
-	def atualizar_particulas(self, delta_t: int, eixos_obj: dict):
+	def atualizar_particulas(self, delta_t: float, eixos_obj: dict):
 		"""Atualiza a velocidade, posição e o peso (e normaliza-o)
 
 		Args:
@@ -239,32 +255,51 @@ class GrupoParticula:
 		for particula in self.__particulas:
 			particula.atualizar_peso(eixos_obj)
 
-		self.soma_pesos = 0
+		self.soma_pesos = sum([p.w for p in self.__particulas])
 
-		for particula in self.__particulas:
-			self.soma_pesos += particula.w
-
-		for particula in self.__particulas:
-			particula.normalizar_peso(self.soma_pesos)
+		if self.soma_pesos > 0:
+			for particula in self.__particulas:
+				particula.normalizar_peso(self.soma_pesos)
 
 	def reamostrar(self):
 		"""Realiza a reamostragem do grupo para reduzir a degeneração"""
 
-		temp_partics = []
+		self.soma_pesos = sum([p.w for p in self.__particulas])
 
-		# Enquanto a nova lista não for preenchida com N partículas
-		while len(temp_partics) < self.n:
+		if self.soma_pesos > 0:
+			# Para gerar uma distribuição de probabilidade, cada parcela
+			#  valerá 1 / pela chance total
+			unid = 1 / self.soma_pesos
 
-			soma_min_w = uniform(0, self.soma_pesos)
-			soma = 0
+			# Peça ao numpy para gerar uma lista com N elementos, a partir
+			#  da lista de partículas, e considerando o peso de cada uma
+			lista = choice(
+				self.__particulas, self.n,
+				p=[unid * p.w for p in self.__particulas])
 
+			# Armazene e converta a lista de selecionados proporc. por peso
+			temp_selec: List[Particula] = list(lista)
+			media_eixos = {}
+			media_veloc = {}
+
+			# Calcule média de todos valores dos eixos
+			for eixo in temp_selec[0].eixos:
+				media_eixos[eixo] = sum([p.eixos[eixo] for p in temp_selec]) / self.n
+
+			# Calcule média de todos valores das velocidades dos eixos
+			for eixo in temp_selec[0].velocidades:
+				media_veloc[eixo] = sum([p.velocidades[eixo] for p in temp_selec]) / self.n
+
+			# Substitua as antigas partículas pelas selecionadas
+			self.__particulas = temp_selec
+
+			# Para cada partícula, atualize seu eixo com a média ponderada
+			#  pelo peso
 			for part in self.__particulas:
-				soma += part.w
-
-				if soma > soma_min_w:
-					temp_partics.append(part)
-
-		self.__particulas = temp_partics
+				for eixo in part.eixos:
+					# TODO aqui vai dar erro por part.w estar infinito
+					part.eixos[eixo] = int(media_eixos[eixo] * part.w)
+					part.velocidades[eixo] = int(media_veloc[eixo] * part.w)
 
 		return None
 
@@ -274,15 +309,3 @@ class GrupoParticula:
 			return None
 
 		return self.__particulas[i]
-
-	# TODO(@duraes-antonio) Remover ou ajustar após definir o máximo de eixos
-	def get_media_xyv(self) -> (int, int, int):
-
-		soma_x = soma_y = soma_v = 0
-
-		for part in self.__particulas:
-			soma_x += part.eixos["x"]
-			soma_y += part.eixos["y"]
-			soma_v += part.v
-
-		return int(soma_x / self.n), int(soma_y / self.n), int(soma_v / self.n)

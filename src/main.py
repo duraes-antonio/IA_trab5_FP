@@ -30,8 +30,6 @@ def processar_video(
 	"""
 
 	video = cv2.VideoCapture(path_video)
-	cv2.namedWindow("saida_video", cv2.WINDOW_NORMAL)
-	cv2.resizeWindow('saida_video', dimensao_video[0], dimensao_video[1])
 
 	# Enquanto o vídeo não finalizar
 	while video.isOpened():
@@ -53,19 +51,16 @@ def processar_video(
 
 		# TRECHO PERTENCENTE AO GRUPO DE PARTÍCULAS
 		particulas.atualizar_particulas(1, {"x": centro[0], "y": centro[1]})
-		# particulas.reamostrar()
+		particulas.reamostrar()
 
 		for i in range(particulas.n):
 			p = particulas.get(i)
 			cv2.circle(frame, (p.eixos["x"], p.eixos["y"]), 3, (0, 0, 255), -1)
 
-		c_grupo = particulas.get_media_xyv()
-		cv2.circle(frame, (c_grupo[0], c_grupo[1]), 7, (0, 255, 0), -1)
-
 		cv2.imshow("saida_video", frame)
 
 		# Se a tecla 'q' for pressionada, interrompa o processamento
-		if cv2.waitKey(1) & 0xFF == ord('q'):
+		if cv2.waitKey(10) & 0xFF == ord('q'):
 			break
 
 	# Libere o vídeo E destrua todas janelas criadas pelo OpenCV
@@ -76,10 +71,10 @@ def processar_video(
 
 
 def main():
-	v_dimensao = (1024, 720)
+	v_dimensao = (1270, 710)
 	eixos_max = {"x": v_dimensao[0], "y": v_dimensao[1]}
-	grupo_part: GrupoParticula = GrupoParticula(100, 3, 1, 25, eixos_max, 50)
-	processar_video(g_path_v_ball, v_dimensao, grupo_part)
+	grupo_part: GrupoParticula = GrupoParticula(50, 1, 20, eixos_max, 5)
+	processar_video(g_path_v_ball.replace(".mp4", "-ext.mp4"), v_dimensao, grupo_part)
 
 	return 0
 
