@@ -52,7 +52,7 @@ class UtilImgOpenCV():
 		Returns:
 			Lista de objetos de contorno OpenCV
 		"""
-		_, contornos, _ = cv2.findContours(
+		contornos, _ = cv2.findContours(
 			frame_cv2_masc, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
 		return contornos
@@ -66,8 +66,7 @@ class UtilImgOpenCV():
 			frame_cv2_rgb: Imagem BGR a ser demarcada
 		"""
 
-		_, contornos, _ = cv2.findContours(
-			frame_cv2_mascara, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		contornos, _ = cv2.findContours(frame_cv2_mascara, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
 		# Desenha um contorno roxo, de expessura 2, no frame_cv2 original
 		cv2.drawContours(frame_cv2_rgb, contornos, -1, (255, 0, 255), 2)
@@ -100,8 +99,7 @@ class UtilImgOpenCV():
 			Tupla com a posição X, Y do centro de massa
 		"""
 
-		img2, contornos, hierarquia = cv2.findContours(
-			frame_cv2_masc, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+		contornos, hierarchy = cv2.findContours(frame_cv2_masc, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
 		# Obtenha o contorno que abrange a maior área
 		max_area: int = 0

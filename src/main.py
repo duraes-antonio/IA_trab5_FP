@@ -5,8 +5,8 @@ from typing import Tuple
 
 import cv2
 
-from dominio.entidades.particula import GrupoParticula
-from dominio.util.util_imagem_opencv import UtilImgOpenCV
+from src.dominio.entidades.particula import GrupoParticula
+from src.dominio.util.util_imagem_opencv import UtilImgOpenCV
 
 path_assets = "../assets/"
 g_path_v_gow = path_assets + "gow2.mp4"
@@ -50,7 +50,7 @@ def processar_video(
 		UtilImgOpenCV.desenhar_box(frame_masc, frame)
 
 		# TRECHO PERTENCENTE AO GRUPO DE PARTÍCULAS
-		particulas.atualizar_particulas(1, {"x": centro[0], "y": centro[1]})
+		particulas.atualizar_particulas(1/30, {"x": centro[0], "y": centro[1]})
 		particulas.reamostrar()
 
 		for i in range(particulas.n):

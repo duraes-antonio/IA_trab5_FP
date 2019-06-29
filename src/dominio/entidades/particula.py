@@ -1,7 +1,7 @@
 from random import randint
 from typing import List, Optional
 
-from math import log, cos, pi, exp
+from math import log, cos, pi, exp, e
 from numpy.random.mtrand import choice
 
 from ..util.validacoes import Validacao
@@ -116,8 +116,8 @@ class Particula:
 
 		for eixo in self.__velocidades:
 
-			# veloc_nova = self.__velocidades[eixo] + gerar_dist_gauss(0, 0.1)
-			veloc_nova = self.__velocidades[eixo] + (self.__v_max - self.__v_min) * 0.1
+			veloc_nova = self.__velocidades[eixo] + gerar_dist_gauss(0, 0.1)
+			#veloc_nova = self.__velocidades[eixo] + (self.__v_max - self.__v_min) * 0.1
 
 			# Normalização
 			if veloc_nova > self.__v_max:
@@ -171,14 +171,8 @@ class Particula:
 		# Se a dist for zero, defina que é 1, para evitar problemas de divisão
 		if dist == 0:
 			dist = 1
-			self.__w = exp(-dist)
 
-		elif dist < 400:
-			self.__w = exp(-dist)
-
-		# Se a dist for muito grande, o peso tenderá a zero
-		else:
-			self.__w = 0
+		self.__w = 1 / e ** (-dist/1460)
 
 		return None
 
