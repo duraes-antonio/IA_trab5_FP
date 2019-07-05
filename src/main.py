@@ -1,6 +1,5 @@
-from os import path
-from typing import Tuple
 from argparse import ArgumentParser, ArgumentTypeError
+from os import path
 
 import cv2
 
@@ -112,6 +111,8 @@ def processar_video(args: Args):
 	video = cv2.VideoCapture(args.path_video)
 	cv2.namedWindow("Saída")
 
+	boo = args.path_video.__contains__('boo_dancing')
+
 	# Obtenha a largura e altura do frame (resolução do vídeo)
 	dimensao = int(video.get(3) * args.dimensao), int(video.get(4) * args.dimensao)
 
@@ -139,7 +140,7 @@ def processar_video(args: Args):
 
 		# Aplique uma máscara na imagem para deixar o objeto branco e o resto
 		#  preto. A máscara deve destacar o objeto desejado por sua faixa de cor
-		frame_masc = UtilImgOpenCV.aplicar_mascara(frame_clone)
+		frame_masc = UtilImgOpenCV.aplicar_mascara(frame_clone, boo)
 
 		centro_obj = UtilImgOpenCV.obter_centro_massa(frame_masc)
 

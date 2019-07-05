@@ -1,4 +1,4 @@
-from typing import Tuple, Optional, List
+from typing import Tuple, List
 
 import scipy.stats
 from numpy import arange, arctan2, array, average, cos, empty, pi, sin, linalg
@@ -80,9 +80,10 @@ class GrupoParticulas:
 			array([c_massa_ant]) - array([c_massa_atual]), axis=1)
 
 		# Sorteie a velocidade entre o mínimo e o máximo
-		desvio = randint(self.__vmin, self.__vmax + 1)
+		desvios = array(
+			[uniform(self.__vmin, self.__vmax + 1) for i in range(self.n)])
 
-		dist_com_ruido = dist + (randn(self.n) * desvio)
+		dist_com_ruido = dist + (randn(self.n) * desvios)
 
 		# Incremente as posições
 		self.__partics[:, 0] += cos(heading) * dist_com_ruido

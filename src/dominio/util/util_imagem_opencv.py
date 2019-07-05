@@ -115,7 +115,7 @@ class UtilImgOpenCV:
 		return w, h
 
 	@staticmethod
-	def aplicar_mascara(frame_cv2_rgb):
+	def aplicar_mascara(frame_cv2_rgb, boo: bool = False):
 		"""Converte a imagem para HSV e aplica filtro Preto/Branco
 
 		Args:
@@ -126,11 +126,15 @@ class UtilImgOpenCV:
 		"""
 
 		hsv = cv2.cvtColor(frame_cv2_rgb, cv2.COLOR_BGR2HSV)
-		cor_intev_min = numpy.array([0, 100, 50])
-		cor_intev_max = numpy.array([10, 255, 255])
-		# cor_intev_min = numpy.array([20, 40, 40])
-		# cor_intev_max = numpy.array([255, 230, 255])
-		#
+
+		if (boo == False):
+			cor_intev_min = numpy.array([0, 100, 50])
+			cor_intev_max = numpy.array([10, 255, 255])
+
+		else:
+			cor_intev_min = numpy.array([20, 40, 40])
+			cor_intev_max = numpy.array([255, 230, 255])
+
 		#
 		# cor_intev_min = numpy.array([0, 70, 70])
 		# cor_intev_max = numpy.array([40, 255, 255])
