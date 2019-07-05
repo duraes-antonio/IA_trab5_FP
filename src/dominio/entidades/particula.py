@@ -5,11 +5,11 @@ from numpy import arange, arctan2, array, average, cos, empty, pi, sin, linalg
 from numpy.random import choice, randint, randn, uniform
 
 
-class GrupoParticulaNumpyClean:
+class GrupoParticulas:
 
 	def __init__(
-			self, centro: Tuple[int, int], n: int, v_min: int, v_max: int,
-			x_max: int, y_max: int, n_pts_ref: Optional[int] = 5):
+			self, n: int, v_min: float, v_max: float, x_max: int, y_max: int,
+			centro: Tuple[int, int] = (0, 0)):
 		"""
 		Args:
 			centro: Centro inicial de massa do objeto
@@ -18,7 +18,6 @@ class GrupoParticulaNumpyClean:
 			v_max: Velocidade máxima que cada partícula pode assumir
 			x_max: Posição horizontal máxima aceitável
 			y_max: Posição vertical máxima aceitável
-			n_pts_ref: Número de pontos a serem usados como balanceadores
 		"""
 
 		self.__centro_ant: Tuple[int, int] = centro
@@ -27,12 +26,6 @@ class GrupoParticulaNumpyClean:
 		self.__vmax = v_max
 
 		self.__n = n
-		self.__n_ref = n_pts_ref
-
-		# Gere M pontos de referência para balancear e corrigir a posição
-		#  da partícula a medida em que centro do massa é atualizado
-		self.__ref_pts = array(
-			[[randint(x_max), randint(y_max)] for i in range(self.__n_ref)])
 
 		# Inicialize os N pesos (1 p/ cada partícula) com valor 1
 		self.__pesos = array([1.0] * n)
@@ -57,7 +50,7 @@ class GrupoParticulaNumpyClean:
 		"""
 
 		self.__predicao(self.__centro_ant, c_massa_atual)
-		self.__atualizacao(c_massa_atual, self.__ref_pts)
+		self.__atualizacao(c_massa_atual)
 		self.__reamostragem()
 
 		# O centro de massa atual agora deve substituir o antigo
@@ -97,35 +90,23 @@ class GrupoParticulaNumpyClean:
 
 		return None
 
-	def __atualizacao(self, c_massa_atual: array, pontos_referencia: array):
+	def __atualizacao(self, c_massa_atual: array):
 		"""Define o peso (w) de acordo com a dist. ao centro de massa do objeto.
 
 		Args:
 			c_massa_atual: Par de coord. do centro atual de massa do objeto
-			pontos_referencia: Lista de coord. (xy) de pts randômicos
 		"""
-
-		# Calcule a distância entre cada ponto de ref. e o centro de massa
-		pts_ref_dist_cent = linalg.norm(pontos_referencia - c_massa_atual, axis=1)
-
-		# Para cada ponto de referência, gere um ruído
-		ruidos = (randn(self.__n_ref))
-
-		# A distribuição final será composta pela distância do i-ésimo ponto
-		# de referência até o centro de massa incrementada pelos i-ésimo ruído
-		distrib = (pts_ref_dist_cent + ruidos)
 
 		# Reinicie todos pesos com valor 1
 		self.__pesos.fill(1)
 
-		for i, ref in enumerate(pontos_referencia):
-			diff_x = (self.__partics[:, 0] - ref[0]) ** 2
-			diff_y = (self.__partics[:, 1] - ref[1]) ** 2
-			dist = (diff_x + diff_y) ** 0.5
+		diff_x = (self.__partics[:, 0] - c_massa_atual[0]) ** 2
+		diff_y = (self.__partics[:, 1] - c_massa_atual[1]) ** 2
+		dist = (diff_x + diff_y) ** 0.5
 
-			# Aplique uma função normal de densidade de probabilidade
-			# para calcular a proximidade de cada partícula
-			self.__pesos *= scipy.stats.norm(dist, 40).pdf(distrib[i])
+		# Aplique uma função normal de densidade de probabilidade
+		# para calcular a proximidade de cada partícula
+		self.__pesos *= scipy.stats.norm(dist, 20).pdf(0)
 
 		# Divida cada peso pela soma de todos (Normalização)
 		self.__pesos /= sum(self.__pesos)
@@ -156,5 +137,9 @@ class GrupoParticulaNumpyClean:
 		return [(int(p[0]), int(p[1])) for p in self.__partics]
 
 	def ponto_medio(self) -> Tuple[int, int]:
-		
+		"""Calcula a média (de x e y) das coordenadas de todas partículas
+
+		Returns:
+			Par contendo o X e o Y do ponto médio do grupo de partículas
+		"""
 		return int(average(self.__partics[:, 0])), int(average(self.__partics[:, 1]))

@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List, Any
 
 import cv2
 import numpy
@@ -8,7 +8,7 @@ class UtilImgOpenCV:
 	"""Classe com filtros para tratar objeto imagem OpenCV"""
 
 	@staticmethod
-	def obter_contorno(frame_cv2_masc):
+	def obter_contorno(frame_cv2_masc) -> List[Any]:
 		"""Encontra os contornos do frame_cv2 com máscara (preto e branco)
 
 		Args:
@@ -47,7 +47,6 @@ class UtilImgOpenCV:
 			frame_cv2_mascara: Imagem HSV, em P/B e c/ objeto em branco
 			frame_cv2_rgb: Imagem BGR a ser contornada
 		"""
-
 		x, y, w, h = cv2.boundingRect(frame_cv2_mascara)
 		cv2.rectangle(frame_cv2_rgb, (x, y), (x + w, y + h), (255, 255, 0), 2)
 		return None
@@ -64,8 +63,8 @@ class UtilImgOpenCV:
 			frame_cv2_rgb: Imagem BGR a ser contornada
 			cor: Tupla contendo as cores RGB [Opcional]
 		"""
-		pt_ini = int(c_massa[0] - larg_alt[0]/2), int(c_massa[1] - larg_alt[1]/2)
-		pt_fim = int(c_massa[0] + larg_alt[0]/2), int(c_massa[1] + larg_alt[1]/2)
+		pt_ini = int(c_massa[0] - larg_alt[0] / 2), int(c_massa[1] - larg_alt[1] / 2)
+		pt_fim = int(c_massa[0] + larg_alt[0] / 2), int(c_massa[1] + larg_alt[1] / 2)
 		cv2.rectangle(frame_cv2_rgb, pt_ini, pt_fim, cor, 2)
 		return None
 

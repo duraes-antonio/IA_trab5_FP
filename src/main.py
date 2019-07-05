@@ -1,9 +1,10 @@
+from os import path
 from typing import Tuple
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 
 import cv2
 
-from dominio.entidades.particula import GrupoParticulaNumpyClean
+from dominio.entidades.particula import GrupoParticulas
 from dominio.util.util_imagem_opencv import UtilImgOpenCV
 
 path_assets = "../assets/"
@@ -18,35 +19,110 @@ VERDE = (0, 255, 0)
 BRANCO = (255, 255, 255)
 
 
-def ler_argumentos():
-	global glob_abert_min, glob_num_pontos, glob_increm_ang
+class Args:
+
+	def __init__(
+			self, num_part: int, v_min: float, v_max: float,
+			path_video: str, exib_centro: bool, exib_box: bool,
+			dimensao: float, frames_atraso: int):
+		self.num_part = num_part
+		self.vel_min = v_min
+		self.vel_max = v_max
+		self.path_video = path_video
+		self.exibir_centro = True if exib_centro is None else bool(exib_centro)
+		self.exibir_box = True if exib_box is None else bool(exib_box)
+		self.atraso = 1 if frames_atraso is None else int(frames_atraso)
+
+		if dimensao is not None and 1 >= dimensao >= 0.1:
+			self.dimensao = dimensao
+
+		else:
+			self.dimensao = 0.93
+
+
+def ler_argumentos() -> Args:
 	parser = ArgumentParser()
-	parser.add_argument("-a", "--angulo", help="Angulo de abertura do setor que se movimenta",
-	                    type=float, required=True)
-	parser.add_argument("-p", "--pontos", help="Quantidade de pontos que serão plotados",
-	                    type=int, required=True)
-	parser.add_argument("-v", "--velocidade", help="Número de graus que o setor andará a cada movimento",
-	                    type=float, required=True)
-	argumentos = parser.parse_args()
 
-	if argumentos.angulo: glob_abert_min = argumentos.angulo
-	if argumentos.pontos: glob_num_pontos = argumentos.pontos
-	if argumentos.pontos: glob_increm_ang = argumentos.velocidade
+	def __restringir_num(valor, min_v: float, max_v: float) -> float:
+		val = float(valor)
+
+		if val < min_v or val > max_v:
+			raise ArgumentTypeError(
+				f"Argumento fora do intervalo [{min_v}, {max_v}]")
+		return val
+
+	def validar_part(valor):
+		return __restringir_num(int(valor), 1, 10000)
+
+	def validar_dimensao(dimensao):
+		return __restringir_num(float(dimensao), 0.1, 1)
+
+	def validar_path(caminho: str):
+
+		if path.isfile(caminho):
+			return caminho
+
+		else:
+			raise ArgumentTypeError(
+				"O caminho não existe ou não pertence a um arquivo")
+
+	parser.add_argument(
+		"-n", type=validar_part, required=True,
+		help="Número de partículas")
+
+	parser.add_argument(
+		"-v1", type=float, required=True,
+		help="Velocidade mínima aceita")
+
+	parser.add_argument(
+		"-v2", type=float, required=True,
+		help="Velocidade máxima aceita")
+
+	parser.add_argument(
+		"-p", type=validar_path, required=True,
+		help="Caminho do vídeo a ser processado")
+
+	parser.add_argument(
+		"-c", type=int, required=False, choices=[0, 1],
+		help="Define se os centróides das partículas e do objeto será exibido")
+
+	parser.add_argument(
+		"-b", type=int, required=False, choices=[0, 1],
+		help="Define se a caixa das partículas e a do objeto serão exibidas")
+
+	parser.add_argument(
+		"-d", type=validar_dimensao, required=False,
+		help="Fator que multiplica a dimensão do vídeo (entre 0.1 e 1)")
+
+	parser.add_argument(
+		"-f", type=validar_part, required=False,
+		help="Quantidade de frames a serem atrasados (Quanto mais, maior a pausa)")
+
+	args = parser.parse_args()
+
+	return Args(args.n, args.v1, args.v2, args.p, args.c, args.b, args.d, args.f)
 
 
-def processar_video(
-		path_video: str, dimensao_video: Tuple[int, int],
-		nome_janela: str, particulas: GrupoParticulaNumpyClean):
+def processar_video(args: Args):
 	"""Processa cada frame do vídeo com o acompanhamento das partículas
 
 	Args:
-		path_video: Caminho do arquivo de vídeo a ser processado
-		dimensao_video: Par com a resolução do vídeo em pixel (larg x alt)
-		nome_janela: Título da janela em que o vídeo será renderizado
-		particulas: Grupo já inicializado com suas partículas
+		args: Objeto contendo argumentos p/ criar as partículas e path do vídeo
 	"""
-	video = cv2.VideoCapture(path_video)
-	cv2.namedWindow(nome_janela)
+	video = cv2.VideoCapture(args.path_video)
+	cv2.namedWindow("Saída")
+
+	# Obtenha a largura e altura do frame (resolução do vídeo)
+	dimensao = int(video.get(3) * args.dimensao), int(video.get(4) * args.dimensao)
+
+	grupo_part: GrupoParticulas = None
+
+	if video.isOpened():
+		grupo_part = GrupoParticulas(
+			int(args.num_part), args.vel_min, args.vel_max, dimensao[0], dimensao[1])
+
+	else:
+		raise IOError("Não foi possível abrir o vídeo")
 
 	# Enquanto o vídeo não finalizar
 	while video.isOpened():
@@ -66,31 +142,39 @@ def processar_video(
 		frame_masc = UtilImgOpenCV.aplicar_mascara(frame_clone)
 
 		centro_obj = UtilImgOpenCV.obter_centro_massa(frame_masc)
-		larg_alt = UtilImgOpenCV.obter_larg_alt_obj(frame_masc)
 
 		# Execute o algorítimo de filtro de partículas
-		particulas.atualizar_particulas(centro_obj)
-
-		# Desenhe o centro de massa do objeto [Ponto verde] e sua box
-		cv2.circle(frame, centro_obj, 5, VERMELHO, -1)
-		UtilImgOpenCV.desenhar_box_pt(centro_obj, larg_alt, frame, VERMELHO)
-		UtilImgOpenCV.desenhar_contorno(frame_masc, frame, VERDE)
+		grupo_part.atualizar_particulas(centro_obj)
 
 		# Desenhe todas as partículas
-		parts = particulas.obter_coords()
+		parts = grupo_part.obter_coords()
 		[cv2.circle(frame, p, 3, BRANCO, -1) for p in parts]
 
-		centro_partic = particulas.ponto_medio()
+		larg_alt = UtilImgOpenCV.obter_larg_alt_obj(frame_masc)
+		centro_partic = grupo_part.ponto_medio()
 
-		# Desenhe o centro da núvem de partículas [Ponto verde] e sua box
-		cv2.circle(frame, centro_partic, 5, ROXO, -1)
-		UtilImgOpenCV.desenhar_box_pt(centro_partic, larg_alt, frame, ROXO)
+		if args.exibir_centro:
+			# Desenhe o centro de massa do objeto [Ponto verde]
+			cv2.circle(frame, centro_obj, 5, VERMELHO, -1)
 
-		frame = cv2.resize(frame, dimensao_video)
-		cv2.imshow(nome_janela, frame)
+			# Desenhe o centro da núvem de partículas [Ponto roxo]
+			cv2.circle(frame, centro_partic, 5, ROXO, -1)
+
+		if args.exibir_box:
+			# Desenhe de vermelho, a box do objeto
+			UtilImgOpenCV.desenhar_box_pt(centro_obj, larg_alt, frame, VERMELHO)
+
+			# E de roxo, a box das partículas
+			UtilImgOpenCV.desenhar_box_pt(centro_partic, larg_alt, frame, ROXO)
+
+		# if args.contornar_obj:
+		# 	UtilImgOpenCV.desenhar_contorno(frame_masc, frame, VERDE)
+
+		frame = cv2.resize(frame, dimensao)
+		cv2.imshow("saida", frame)
 
 		# Se a tecla 'q' for pressionada, interrompa o processamento
-		if cv2.waitKey(1) & 0xFF == ord('q'):
+		if cv2.waitKey(args.atraso) & 0xFF == ord('q'):
 			break
 
 	# Libere o vídeo E destrua todas janelas criadas pelo OpenCV
@@ -101,12 +185,9 @@ def processar_video(
 
 
 def main():
-	fator = .95
-	v_dimensao = (int(1200 * fator), int(720 * fator))
-	nome_janela = "saida"
-	grupo_part = GrupoParticulaNumpyClean(
-		(0, 0), 5, 3, 6, v_dimensao[0], v_dimensao[1])
-	processar_video(g_path_v_ball, v_dimensao, nome_janela, grupo_part)
+	args: Args = ler_argumentos()
+	processar_video(args)
 	return 0
+
 
 main()
