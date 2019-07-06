@@ -3,7 +3,7 @@
 Implementação e observações levantadas sobre o algorítimo Filtro de Partículas.
 
 <p align="center"/>
-<img src="https://cdn131.picsart.com/281241735010211.png?r1024x1024" alt="Smiley face" width="420">
+<img src="https://cdn131.picsart.com/281241735010211.png?r1024x1024" width=50%>
 
 ## APRESENTAÇÃO
 
@@ -32,6 +32,10 @@ A aplicação escolhida para teste do algoritmo foi o rastreamento de um objeto 
 
 <p align="justify"/>
 O problema resume-se, essencialmente, na distinção do objeto-alvo de outros itens presentes no cenário, na captura do máximo possível da área do corpo do objeto para que seja possível calcular as coordenadas de seu centro de massa com precisão satisfatória.
+
+<p align="center"/>
+<img align="middle" width=75% src="https://github.com/duraes-antonio/IA_trab5_FP/blob/master/doc/execucao.gif">
+<br>
 
 ## 3. IMPLEMENTAÇÃO
 
