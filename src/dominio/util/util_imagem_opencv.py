@@ -33,7 +33,7 @@ class UtilImgOpenCV:
 			cor: Tupla contendo as cores RGB [Opcional]
 		"""
 
-		_, contornos, _ = cv2.findContours(frame_cv2_mascara, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+		contornos, _ = cv2.findContours(frame_cv2_mascara, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
 		# Desenha um contorno roxo, de expessura 2, no frame_cv2 original
 		cv2.drawContours(frame_cv2_rgb, contornos, -1, cor, 2)
